@@ -6,7 +6,9 @@
 ################################################################
 
 export PATH=/bin:/usr/bin:/usr/local/bin
-TODAY=`date +"%d%b%Y"`
+TODAY=`date +%d_%m_%Y-%H`
+BACKUP_RETAIN_DAYS="7"
+
 
 DB_BACKUP_PATH='/usr/local/.db'
 ################################################################
@@ -29,9 +31,9 @@ echo $choice | base64 >> /usr/local/.db/.key
 
 read -p $'\e[1;92m[Default localhost] Enter hostname: \e[0m' choice
 if [ ! -z $choice ]; then
-	echo $choice | base64 >> /usr/local/.db/.key
+        echo $choice | base64 >> /usr/local/.db/.key
 else
-	echo "localhost" | base64 >> /usr/local/.db/.key
+        echo "localhost" | base64 >> /usr/local/.db/.key
 fi
 
 read -p $'\e[1;92m[Default 3306] Enter Port: \e[0m' choice
@@ -44,7 +46,7 @@ fi
 }
 
 function  resetkey() {
-	echo "" > /usr/local/.db/.key
+        echo "" > /usr/local/.db/.key
         sed -i '1d' /usr/local/.db/.key
 }
 
@@ -55,7 +57,6 @@ MYSQL_PASSWORD=`awk 'NR==2' /usr/local/.db/.key | base64 -d`
 DATABASE_NAME=`awk 'NR==3' /usr/local/.db/.key | base64 -d`
 MYSQL_HOST=`awk 'NR==4' /usr/local/.db/.key | base64 -d`
 MYSQL_PORT=`awk 'NR==5' /usr/local/.db/.key | base64 -d`
-BACKUP_RETAIN_DAYS=7
 
 ##################################################################
 
@@ -74,9 +75,13 @@ else
   exit 1
 fi
 
+cd /var/www
+zip -r html.${TODAY}.zip html
+mv html.${TODAY}.zip ${DB_BACKUP_PATH}/${TODAY}/html_${TODAY}.zip
+
 ##### Remove backups older than {BACKUP_RETAIN_DAYS} days  #####
 
-DBDELDATE=`date +"%d%b%Y" --date="${BACKUP_RETAIN_DAYS} days ago"`
+DBDELDATE=`date +"%d_%m_%Y-%H" --date="${BACKUP_RETAIN_DAYS} days ago"`
 
 if [ ! -z ${DB_BACKUP_PATH} ]; then
       cd ${DB_BACKUP_PATH}
